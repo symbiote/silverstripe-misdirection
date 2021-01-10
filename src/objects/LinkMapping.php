@@ -56,8 +56,8 @@ class LinkMapping extends DataObject {
 	private static $default_sort = 'ID DESC';
 
 	private static $searchable_fields = array(
-		'LinkType',
 		'MappedLink',
+		'LinkType',
 		'Priority',
 		'RedirectType'
 	);
@@ -101,19 +101,28 @@ class LinkMapping extends DataObject {
 		return true;
 	}
 
-	public function canEdit($member = null) {
-
-		return Permission::checkMember($member, 'ADMIN');
+	public function canEdit($member = null)
+	{
+		return (
+			Permission::checkMember($member, 'ADMIN') ||
+			Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
+		);
 	}
 
-	public function canCreate($member = null, $context = array()) {
-
-		return Permission::checkMember($member, 'ADMIN');
+	public function canCreate($member = null, $context = array())
+	{
+		return (
+			Permission::checkMember($member, 'ADMIN') ||
+			Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
+		);
 	}
 
-	public function canDelete($member = null) {
-
-		return Permission::checkMember($member, 'ADMIN');
+	public function canDelete($member = null)
+	{
+		return (
+			Permission::checkMember($member, 'ADMIN') ||
+			Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
+		);
 	}
 
 	/**
@@ -291,6 +300,7 @@ class LinkMapping extends DataObject {
 	public function onBeforeWrite() {
 
 		parent::onBeforeWrite();
+
 		$this->MappedLink = MisdirectionService::unify_URL($this->MappedLink);
 		$this->RedirectLink = trim($this->RedirectLink, ' ?/');
 		$this->HostnameRestriction = MisdirectionService::unify_URL($this->HostnameRestriction);
