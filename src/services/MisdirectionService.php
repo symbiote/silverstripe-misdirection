@@ -326,16 +326,16 @@ class MisdirectionService {
 					// Bypass the request filter.
 
 					case 'Nearest':
-						$link = '/' . HTTP::setGetVar('misdirected', true, $nearestParent);
+						$link = HTTP::setGetVar('misdirected', true, $nearestParent);
 						break;
 					case 'This':
-						$link = '/' . HTTP::setGetVar('misdirected', true, $thisPage);
+						$link = HTTP::setGetVar('misdirected', true, $thisPage);
 						break;
 					case 'URL':
 
 						// When appropriate, prepend the base URL to match a page redirection.
 
-						$link = self::is_external_URL($toURL) ? (ClassInfo::exists(Multisites::class) ? HTTP::setGetVar('misdirected', true, $toURL) : $toURL) : ('/' . HTTP::setGetVar('misdirected', true, Controller::join_links(Director::baseURL(), $toURL)));
+						$link = self::is_external_URL($toURL) ? (ClassInfo::exists(Multisites::class) ? HTTP::setGetVar('misdirected', true, $toURL) : $toURL) : (HTTP::setGetVar('misdirected', true, Controller::join_links(Director::baseURL(), $toURL)));
 						break;
 				}
 				if($link) {
