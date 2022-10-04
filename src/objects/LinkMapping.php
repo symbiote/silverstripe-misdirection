@@ -302,7 +302,7 @@ class LinkMapping extends DataObject {
 		parent::onBeforeWrite();
 
 		$this->MappedLink = MisdirectionService::unify_URL($this->MappedLink);
-		$this->RedirectLink = trim($this->RedirectLink, ' ?/');
+		$this->RedirectLink = trim($this->RedirectLink ?? '', ' ?/');
 		$this->HostnameRestriction = MisdirectionService::unify_URL($this->HostnameRestriction);
 	}
 
@@ -333,7 +333,7 @@ class LinkMapping extends DataObject {
 
 				// This is to support multiple sites, where the absolute page URLs are treated as relative.
 
-				return MisdirectionService::is_external_URL($link) ? ltrim($link, '/') : $link;
+				return MisdirectionService::is_external_URL($link) ? ltrim($link ?? '', '/') : $link;
 			}
 		}
 		else {
@@ -409,7 +409,7 @@ class LinkMapping extends DataObject {
 
 	public function getLinkSummary() {
 
-		return ($link = $this->getLink()) ? trim($link, ' ?/') : '-';
+		return ($link = $this->getLink()) ? trim($link ?? '', ' ?/') : '-';
 	}
 
 	/**
