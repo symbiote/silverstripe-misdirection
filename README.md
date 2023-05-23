@@ -6,17 +6,19 @@ _The current release is **3.1.1**_
 
 ## Requirement
 
-* SilverStripe 3.1 → **4.0**
+* Silverstripe 3.1, 4 or 5
 
 This module does **not** require the CMS.
 
 ## Getting Started
 
-* [Place the module under your root project directory.](https://packagist.org/packages/nglasl/silverstripe-misdirection)
-* `/dev/build`
-* Select `Misdirection` through the CMS.
-* Create a link mapping.
-* `/mapping`
+Install the module using composer:
+```
+composer require nglasl/silverstripe-misdirection dev-master
+```
+Then run dev/build.
+
+Select `Misdirection` through the CMS and create a link mapping.
 
 ## Overview
 
@@ -86,7 +88,3 @@ nglasl\misdirection\MisdirectionRequestFilter:
 ```
 
 When a page is moved, the appropriate link mappings are automatically created and maintained. This allows full control over which legacy URLs remain in the system.
-
-## Maintainer Contact
-
-	Nathan Glasl, nathan@symbiote.com.au
