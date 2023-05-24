@@ -5,7 +5,6 @@ namespace nglasl\misdirection;
 use SilverStripe\Admin\ModelAdmin;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Forms\GridField\GridFieldSortableHeader;
-use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 
 /**
@@ -52,8 +51,6 @@ class MisdirectionAdmin extends ModelAdmin
 	 */
 	public function getMappingChain()
 	{
-		$user = Member::currentUserID();
-
 		if (singleton(LinkMapping::class)->canCreate()) {
 
 			// Instantiate a request to handle the link mapping.

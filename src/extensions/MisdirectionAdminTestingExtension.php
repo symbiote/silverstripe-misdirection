@@ -3,8 +3,8 @@
 namespace nglasl\misdirection;
 
 use SilverStripe\Core\Extension;
-use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
+use SilverStripe\Security\Security;
 use SilverStripe\View\Requirements;
 
 /**
@@ -24,7 +24,7 @@ class MisdirectionAdminTestingExtension extends Extension {
 
 		// Restrict this functionality to administrators.
 
-		$user = Member::currentUserID();
+		$user = Security::getCurrentUser();
 		if(Permission::checkMember($user, 'ADMIN')) {
 			$gridfield = $form->fields->items[0];
 			if(isset($gridfield)) {

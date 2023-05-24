@@ -10,7 +10,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\FunctionalTest;
-use SilverStripe\Security\Member;
+use SilverStripe\Security\DefaultAdminService;
 use Symbiote\Multisites\Multisites;
 
 /**
@@ -58,7 +58,7 @@ class FunctionalTests extends FunctionalTest {
 
 			// This is required to support multiple sites.
 
-			$this->logInAs(Member::default_admin());
+			$this->logInAs(DefaultAdminService::findOrCreateDefaultAdmin());
 			$parentID = ClassInfo::exists(Multisites::class) ? Multisites::inst()->getCurrentSiteId() : 0;
 
 			// Instantiate pages to use.
