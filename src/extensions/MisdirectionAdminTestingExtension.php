@@ -23,10 +23,6 @@ class MisdirectionAdminTestingExtension extends Extension {
 		Requirements::css('nglasl/silverstripe-misdirection: client/css/misdirection.css');
 
 		// Restrict this functionality to administrators.
-
-		// $user = Member::currentUserID();
-		// if(Permission::checkMember($user, 'ADMIN')) {
-
 		$member = Security::getCurrentUser();
 		if (Permission::checkMember($member, 'ADMIN')) {
 		

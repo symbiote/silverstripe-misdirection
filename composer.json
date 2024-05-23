@@ -20,7 +20,7 @@
 		"email": "nathan@symbiote.com.au"
 	}],
 	"require": {
-		"silverstripe/framework": "~4.0 || ^5"
+		"silverstripe/framework": "^4 || ^5"
 	},
 	"autoload": {
 		"psr-4": {
