@@ -3,7 +3,7 @@
 namespace nglasl\misdirection;
 
 use SilverStripe\Core\Extension;
-use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
 use SilverStripe\Security\Permission;
 use SilverStripe\View\Requirements;
 
