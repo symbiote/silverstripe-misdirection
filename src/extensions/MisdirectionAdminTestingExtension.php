@@ -24,8 +24,12 @@ class MisdirectionAdminTestingExtension extends Extension {
 
 		// Restrict this functionality to administrators.
 
-		$user = Member::currentUserID();
-		if(Permission::checkMember($user, 'ADMIN')) {
+		// $user = Member::currentUserID();
+		// if(Permission::checkMember($user, 'ADMIN')) {
+
+		$member = Security::getCurrentUser();
+		if (Permission::check('CMS_ACCESS_CMSmain', 'any', $member)) {
+		
 			$gridfield = $form->fields->items[0];
 			if(isset($gridfield)) {
 
