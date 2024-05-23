@@ -28,7 +28,7 @@ class MisdirectionAdminTestingExtension extends Extension {
 		// if(Permission::checkMember($user, 'ADMIN')) {
 
 		$member = Security::getCurrentUser();
-		if (Permission::check('CMS_ACCESS_CMSmain', 'any', $member)) {
+		if (Permission::checkMember($member, 'ADMIN')) {
 		
 			$gridfield = $form->fields->items[0];
 			if(isset($gridfield)) {
