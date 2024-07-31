@@ -25,424 +25,434 @@ use Symbiote\Multisites\Multisites;
  *	@author Nathan Glasl <nathan@symbiote.com.au>
  */
 
-class LinkMapping extends DataObject {
-
-	private static $table_name = 'LinkMapping';
-
-	/**
-	 *	Manually define the redirect page relationship when the CMS module is not present.
-	 */
-
-	private static $db = array(
-		'LinkType' => "Enum('Simple, Regular Expression', 'Simple')",
-		'MappedLink' => 'Varchar(255)',
-		'IncludesHostname' => 'Boolean',
-		'Priority' => 'Int',
-		'RedirectType' => "Enum('Link, Page', 'Link')",
-		'RedirectLink' => 'Varchar(255)',
-		'RedirectPageID' => 'Int',
-		'ResponseCode' => 'Int',
-		'HostnameRestriction' => 'Varchar(255)'
-	);
-
-	private static $defaults = array(
-		'ResponseCode' => 301
-	);
-
-	/**
-	 *	Make sure the link mappings are only ordered by priority and specificity when matching.
-	 */
-
-	private static $default_sort = 'ID DESC';
-
-	private static $searchable_fields = array(
-		'MappedLink',
-		'LinkType',
-		'Priority',
-		'RedirectType'
-	);
-
-	private static $summary_fields = array(
-		'MappedLink',
-		'LinkSummary',
-		'Priority',
-		'RedirectTypeSummary',
-		'RedirectPageTitle'
-	);
-
-	private static $field_labels = array(
-		'MappedLink' => 'Mapping',
-		'LinkSummary' => 'Redirection',
-		'RedirectTypeSummary' => 'Redirect Type',
-		'RedirectPageTitle' => 'Redirect Page Title'
-	);
-
-	/**
-	 *	Make sure previous link mappings take precedence.
-	 */
-
-	private static $priority = 'ASC';
-
-	/**
-	 *	Keep track of the initial URL for regular expression pattern replacement.
-	 *
-	 *	@parameter <{URL}> string
-	 */
-
-	private $matchedURL;
-
-	public function setMatchedURL($matchedURL) {
-
-		$this->matchedURL = $matchedURL;
-	}
-
-	public function canView($member = null) {
-
-		return true;
-	}
-
-	public function canEdit($member = null)
-	{
-		return (
-			Permission::checkMember($member, 'ADMIN') ||
-			Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
-		);
-	}
-
-	public function canCreate($member = null, $context = array())
-	{
-		return (
-			Permission::checkMember($member, 'ADMIN') ||
-			Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
-		);
-	}
-
-	public function canDelete($member = null)
-	{
-		return (
-			Permission::checkMember($member, 'ADMIN') ||
-			Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
-		);
-	}
-
-	/**
-	 *	Print the mapped URL associated with this link mapping.
-	 *
-	 *	@return string
-	 */
-
-	public function getTitle() {
-
-		return $this->MappedLink;
-	}
-
-	public function getCMSFields() {
-
-		$fields = parent::getCMSFields();
-		Requirements::css('nglasl/silverstripe-misdirection: client/css/misdirection.css');
-
-		// Remove any fields that are not required in their default state.
-
-		$fields->removeByName('MappedLink');
-		$fields->removeByName('IncludesHostname');
-		$fields->removeByName('Priority');
-		$fields->removeByName('RedirectType');
-		$fields->removeByName('RedirectLink');
-		$fields->removeByName('RedirectPageID');
-		$fields->removeByName('ResponseCode');
-		$fields->removeByName('HostnameRestriction');
-
-		// Update any fields that are displayed.
-
-		$fields->dataFieldByName('LinkType')->addExtraClass('link-type')->setTitle('Type');
-
-		// Instantiate the required fields.
-
-		$fields->insertBefore(HeaderField::create(
-			'MappedLinkHeader',
-			'Mapping',
-			3
-		), 'LinkType');
-
-		// Retrieve the mapped link configuration as a single grouping.
-
-		$URL = FieldGroup::create(
-			TextField::create(
-				'MappedLink',
-				''
-			)->addExtraClass('mapped-link')->setDescription('This should <strong>not</strong> include the <strong>HTTP/S</strong> scheme'),
-			CheckboxField::create(
-				'IncludesHostname',
-				'Includes Hostname?'
-			)
-		)->setTitle('URL');
-		$fields->addFieldToTab('Root.Main', $URL);
-
-		// Generate the 1 - 10 priority selection.
-
-		$range = array();
-		for($iteration = 1; $iteration <= 10; $iteration++) {
-			$range[$iteration] = $iteration;
-		}
-		$fields->addFieldToTab('Root.Main', DropdownField::create(
-			'Priority',
-			null,
-			$range
-		));
-
-		// Retrieve the redirection configuration as a single grouping.
-
-		$fields->addFieldToTab('Root.Main', HeaderField::create(
-			'RedirectionHeader',
-			'Redirection',
-			3
-		));
-		$redirect = FieldGroup::create();
-		$redirect->push(TextField::create(
-			'RedirectLink',
-			''
-		)->addExtraClass('redirect-link')->setDescription('This requires the <strong>HTTP/S</strong> scheme for an external URL'));
-
-		// Allow redirect page configuration when the CMS module is present.
-
-		if(ClassInfo::exists(SiteTree::class)) {
-
-			// Allow redirect type configuration.
-
-			if(!$this->RedirectType) {
-
-				// Initialise the default redirect type.
-
-				$this->RedirectType = 'Link';
-			}
-			$fields->addFieldToTab('Root.Main', SelectionGroup::create(
-				'RedirectType',
-				array(
-					'Link//To URL' => $redirect,
-					'Page//To Page' => TreeDropdownField::create(
-						'RedirectPageID',
-						'',
-						SiteTree::class
-					)
-				)
-			));
-		}
-		else {
-			$redirect->setTitle('To URL');
-			$fields->addFieldToTab('Root.Main', $redirect);
-		}
-
-		// Use third party validation against an external URL.
+class LinkMapping extends DataObject
+{
+
+    private static $table_name = 'LinkMapping';
+
+    /**
+     *	Manually define the redirect page relationship when the CMS module is not present.
+     */
+
+    private static $db = [
+        'LinkType' => "Enum('Simple, Regular Expression', 'Simple')",
+        'MappedLink' => 'Varchar(255)',
+        'IncludesHostname' => 'Boolean',
+        'Priority' => 'Int',
+        'RedirectType' => "Enum('Link, Page', 'Link')",
+        'RedirectLink' => 'Varchar(255)',
+        'RedirectPageID' => 'Int',
+        'ResponseCode' => 'Int',
+        'HostnameRestriction' => 'Varchar(255)'
+    ];
+
+    private static $defaults = [
+        'ResponseCode' => 301
+    ];
+
+    /**
+     *	Make sure the link mappings are only ordered by priority and specificity when matching.
+     */
+
+    private static $default_sort = 'ID DESC';
+
+    private static $searchable_fields = [
+        'MappedLink',
+        'LinkType',
+        'Priority',
+        'RedirectType'
+    ];
+
+    private static $summary_fields = [
+        'MappedLink',
+        'LinkSummary',
+        'Priority',
+        'RedirectTypeSummary',
+        'RedirectPageTitle'
+    ];
+
+    private static $field_labels = [
+        'MappedLink' => 'Mapping',
+        'LinkSummary' => 'Redirection',
+        'RedirectTypeSummary' => 'Redirect Type',
+        'RedirectPageTitle' => 'Redirect Page Title'
+    ];
+
+    /**
+     *	Make sure previous link mappings take precedence.
+     */
+
+    private static $priority = 'ASC';
+
+    /**
+     *	Keep track of the initial URL for regular expression pattern replacement.
+     *
+     *	@parameter <{URL}> string
+     */
+
+    private $matchedURL;
+
+    public function setMatchedURL($matchedURL)
+    {
+
+        $this->matchedURL = $matchedURL;
+    }
+
+    public function canView($member = null)
+    {
+
+        return true;
+    }
+
+    public function canEdit($member = null)
+    {
+        return (
+            Permission::checkMember($member, 'ADMIN') ||
+            Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
+        );
+    }
+
+    public function canCreate($member = null, $context = [])
+    {
+        return (
+            Permission::checkMember($member, 'ADMIN') ||
+            Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
+        );
+    }
+
+    public function canDelete($member = null)
+    {
+        return (
+            Permission::checkMember($member, 'ADMIN') ||
+            Permission::checkMember($member, 'CMS_ACCESS_nglasl\misdirection\MisdirectionAdmin')
+        );
+    }
+
+    /**
+     *	Print the mapped URL associated with this link mapping.
+     *
+     *	@return string
+     */
+
+    public function getTitle()
+    {
+
+        return $this->MappedLink;
+    }
+
+    public function getCMSFields()
+    {
+
+        $fields = parent::getCMSFields();
+        Requirements::css('nglasl/silverstripe-misdirection: client/css/misdirection.css');
+
+        // Remove any fields that are not required in their default state.
+
+        $fields->removeByName('MappedLink');
+        $fields->removeByName('IncludesHostname');
+        $fields->removeByName('Priority');
+        $fields->removeByName('RedirectType');
+        $fields->removeByName('RedirectLink');
+        $fields->removeByName('RedirectPageID');
+        $fields->removeByName('ResponseCode');
+        $fields->removeByName('HostnameRestriction');
+
+        // Update any fields that are displayed.
+
+        $fields->dataFieldByName('LinkType')->addExtraClass('link-type')->setTitle('Type');
+
+        // Instantiate the required fields.
+
+        $fields->insertBefore(HeaderField::create(
+            'MappedLinkHeader',
+            'Mapping',
+            3
+        ), 'LinkType');
+
+        // Retrieve the mapped link configuration as a single grouping.
+
+        $URL = FieldGroup::create(
+            TextField::create(
+                'MappedLink',
+                ''
+            )->addExtraClass('mapped-link')->setDescription('This should <strong>not</strong> include the <strong>HTTP/S</strong> scheme'),
+            CheckboxField::create(
+                'IncludesHostname',
+                'Includes Hostname?'
+            )
+        )->setTitle('URL');
+        $fields->addFieldToTab('Root.Main', $URL);
+
+        // Generate the 1 - 10 priority selection.
+
+        $range = [];
+        for($iteration = 1; $iteration <= 10; $iteration++) {
+            $range[$iteration] = $iteration;
+        }
+        $fields->addFieldToTab('Root.Main', DropdownField::create(
+            'Priority',
+            null,
+            $range
+        ));
+
+        // Retrieve the redirection configuration as a single grouping.
+
+        $fields->addFieldToTab('Root.Main', HeaderField::create(
+            'RedirectionHeader',
+            'Redirection',
+            3
+        ));
+        $redirect = FieldGroup::create();
+        $redirect->push(TextField::create(
+            'RedirectLink',
+            ''
+        )->addExtraClass('redirect-link')->setDescription('This requires the <strong>HTTP/S</strong> scheme for an external URL'));
+
+        // Allow redirect page configuration when the CMS module is present.
+
+        if(ClassInfo::exists(SiteTree::class)) {
+
+            // Allow redirect type configuration.
+
+            if(!$this->RedirectType) {
+
+                // Initialise the default redirect type.
+
+                $this->RedirectType = 'Link';
+            }
+            $fields->addFieldToTab('Root.Main', SelectionGroup::create(
+                'RedirectType',
+                [
+                    'Link//To URL' => $redirect,
+                    'Page//To Page' => TreeDropdownField::create(
+                        'RedirectPageID',
+                        '',
+                        SiteTree::class
+                    )
+                ]
+            ));
+        } else {
+            $redirect->setTitle('To URL');
+            $fields->addFieldToTab('Root.Main', $redirect);
+        }
+
+        // Use third party validation against an external URL.
+
+        if($this->canEdit()) {
+            Requirements::javascript('nglasl/silverstripe-misdirection: client/javascript/misdirection-link-mapping.js');
+            $redirect->push(CheckboxField::create(
+                'ValidateExternal',
+                'Validate External URL?'
+            )->addExtraClass('validate-external'));
+        }
+
+        // Retrieve the response code selection.
+
+        $responses = Config::inst()->get(MisDirectionRequestProcessor::class, 'status_codes');
+        $selection = [];
+        foreach($responses as $code => $description) {
+            if(($code >= 300) && ($code < 400)) {
+                $selection[$code] = "{$code}: {$description}";
+            }
+        }
+        $fields->addFieldToTab('Root.Main', DropdownField::create(
+            'ResponseCode',
+            'Response Code',
+            $selection
+        ));
 
-		if($this->canEdit()) {
-			Requirements::javascript('nglasl/silverstripe-misdirection: client/javascript/misdirection-link-mapping.js');
-			$redirect->push(CheckboxField::create(
-				'ValidateExternal',
-				'Validate External URL?'
-			)->addExtraClass('validate-external'));
-		}
+        // The optional hostname restriction is now deprecated.
+
+        if($this->HostnameRestriction) {
+            $fields->addFieldToTab('Root.Optional', TextField::create(
+                'HostnameRestriction'
+            ));
+        }
 
-		// Retrieve the response code selection.
+        // Allow extension customisation.
+
+        $this->extend('updateLinkMappingCMSFields', $fields);
+        return $fields;
+    }
+
+    public function validate()
+    {
 
-		$responses = Config::inst()->get(MisDirectionRequestProcessor::class, 'status_codes');
-		$selection = array();
-		foreach($responses as $code => $description) {
-			if(($code >= 300) && ($code < 400)) {
-				$selection[$code] = "{$code}: {$description}";
-			}
-		}
-		$fields->addFieldToTab('Root.Main', DropdownField::create(
-			'ResponseCode',
-			'Response Code',
-			$selection
-		));
+        $result = parent::validate();
+
+        // Determine whether a regular expression mapping is possible to match against.
 
-		// The optional hostname restriction is now deprecated.
-
-		if($this->HostnameRestriction) {
-			$fields->addFieldToTab('Root.Optional', TextField::create(
-				'HostnameRestriction'
-			));
-		}
+        if($result->isValid() && ($this->LinkType === 'Regular Expression') && (!$this->MappedLink || !is_numeric(@preg_match("%{$this->MappedLink}%", null)))) {
+            $result->addError('Invalid regular expression!');
+        }
 
-		// Allow extension customisation.
+        // Use third party validation to determine an external URL (https://gist.github.com/dperini/729294 and http://mathiasbynens.be/demo/url-regex).
 
-		$this->extend('updateLinkMappingCMSFields', $fields);
-		return $fields;
-	}
-
-	public function validate() {
+        elseif($result->isValid() && $this->ValidateExternal && $this->RedirectLink && !MisdirectionService::is_external_URL($this->RedirectLink)) {
+            $result->addError('External URL validation failed!');
+        }
 
-		$result = parent::validate();
+        // Allow extension customisation.
 
-		// Determine whether a regular expression mapping is possible to match against.
+        $this->extend('validateLinkMapping', $result);
+        return $result;
+    }
 
-		if($result->isValid() && ($this->LinkType === 'Regular Expression') && (!$this->MappedLink || !is_numeric(@preg_match("%{$this->MappedLink}%", null)))) {
-			$result->addError('Invalid regular expression!');
-		}
+    /**
+     *	Unify any URLs that may have been defined.
+     */
 
-		// Use third party validation to determine an external URL (https://gist.github.com/dperini/729294 and http://mathiasbynens.be/demo/url-regex).
+    public function onBeforeWrite()
+    {
 
-		else if($result->isValid() && $this->ValidateExternal && $this->RedirectLink && !MisdirectionService::is_external_URL($this->RedirectLink)) {
-			$result->addError('External URL validation failed!');
-		}
+        parent::onBeforeWrite();
 
-		// Allow extension customisation.
+        $this->MappedLink = MisdirectionService::unify_URL($this->MappedLink);
+        $this->RedirectLink = trim($this->RedirectLink, ' ?/');
+        $this->HostnameRestriction = MisdirectionService::unify_URL($this->HostnameRestriction);
+    }
 
-		$this->extend('validateLinkMapping', $result);
-		return $result;
-	}
+    /**
+     *	Retrieve the page associated with this link mapping redirection.
+     *
+     *	@return site tree
+     */
 
-	/**
-	 *	Unify any URLs that may have been defined.
-	 */
+    public function getRedirectPage()
+    {
 
-	public function onBeforeWrite() {
+        return (ClassInfo::exists(SiteTree::class) && $this->RedirectPageID) ? SiteTree::get()->byID($this->RedirectPageID) : null;
+    }
 
-		parent::onBeforeWrite();
+    /**
+     *	Retrieve the redirection URL.
+     *
+     *	@return string
+     */
 
-		$this->MappedLink = MisdirectionService::unify_URL($this->MappedLink);
-		$this->RedirectLink = trim($this->RedirectLink, ' ?/');
-		$this->HostnameRestriction = MisdirectionService::unify_URL($this->HostnameRestriction);
-	}
+    public function getLink()
+    {
 
-	/**
-	 *	Retrieve the page associated with this link mapping redirection.
-	 *
-	 *	@return site tree
-	 */
+        if($this->RedirectType === 'Page') {
 
-	public function getRedirectPage() {
+            // Determine the home page URL when appropriate.
 
-		return (ClassInfo::exists(SiteTree::class) && $this->RedirectPageID) ? SiteTree::get()->byID($this->RedirectPageID) : null;
-	}
+            if(($page = $this->getRedirectPage()) && ($link = ($page->Link() === Director::baseURL()) ? Controller::join_links(Director::baseURL(), 'home/') : $page->Link())) {
 
-	/**
-	 *	Retrieve the redirection URL.
-	 *
-	 *	@return string
-	 */
+                // This is to support multiple sites, where the absolute page URLs are treated as relative.
 
-	public function getLink() {
+                return MisdirectionService::is_external_URL($link) ? ltrim($link, '/') : $link;
+            }
+        } else {
 
-		if($this->RedirectType === 'Page') {
+            // Apply the regular expression pattern replacement.
 
-			// Determine the home page URL when appropriate.
+            if($link = (($this->LinkType === 'Regular Expression') && $this->matchedURL) ? preg_replace("%{$this->MappedLink}%i", $this->RedirectLink, $this->matchedURL) : $this->RedirectLink) {
 
-			if(($page = $this->getRedirectPage()) && ($link = ($page->Link() === Director::baseURL()) ? Controller::join_links(Director::baseURL(), 'home/') : $page->Link())) {
+                // When appropriate, prepend the base URL to match a page redirection.
 
-				// This is to support multiple sites, where the absolute page URLs are treated as relative.
+                $prepended = Controller::join_links(Director::baseURL(), $link);
+                if(MisdirectionService::is_external_URL($link)) {
+                    return ClassInfo::exists(Multisites::class) ? HTTP::setGetVar('misdirected', true, $link) : $link;
+                }
 
-				return MisdirectionService::is_external_URL($link) ? ltrim($link, '/') : $link;
-			}
-		}
-		else {
+                // This is needed, otherwise infinitely recursive mappings won't be detected in advance.
 
-			// Apply the regular expression pattern replacement.
+                elseif(MisdirectionService::is_external_URL($prepended)) {
+                    return $link;
+                } else {
+                    return $prepended;
+                }
+            }
+        }
 
-			if($link = (($this->LinkType === 'Regular Expression') && $this->matchedURL) ? preg_replace("%{$this->MappedLink}%i", $this->RedirectLink, $this->matchedURL) : $this->RedirectLink) {
+        // No redirection URL has been found.
 
-				// When appropriate, prepend the base URL to match a page redirection.
+        return null;
+    }
 
-				$prepended = Controller::join_links(Director::baseURL(), $link);
-				if(MisdirectionService::is_external_URL($link)) {
-					return ClassInfo::exists(Multisites::class) ? HTTP::setGetVar('misdirected', true, $link) : $link;
-				}
+    /**
+     *	Retrieve the redirection hostname.
+     *
+     *	@return string
+     */
 
-				// This is needed, otherwise infinitely recursive mappings won't be detected in advance.
+    public function getLinkHost()
+    {
 
-				else if(MisdirectionService::is_external_URL($prepended)) {
-					return $link;
-				}
-				else {
-					return $prepended;
-				}
-			}
-		}
+        if($this->RedirectType === 'Page') {
 
-		// No redirection URL has been found.
+            // Determine the home page URL when appropriate.
 
-		return null;
-	}
+            if(($page = $this->getRedirectPage()) && ($link = ($page->Link() === Director::baseURL()) ? Controller::join_links(Director::baseURL(), 'home/') : $page->Link())) {
 
-	/**
-	 *	Retrieve the redirection hostname.
-	 *
-	 *	@return string
-	 */
+                // Determine whether a redirection hostname exists.
 
-	public function getLinkHost() {
+                return MisdirectionService::is_external_URL($link) ? parse_url($link, PHP_URL_HOST) : null;
+            }
+        } else {
 
-		if($this->RedirectType === 'Page') {
+            // Apply the regular expression pattern replacement.
 
-			// Determine the home page URL when appropriate.
+            if($link = (($this->LinkType === 'Regular Expression') && $this->matchedURL) ? preg_replace("%{$this->MappedLink}%i", $this->RedirectLink, $this->matchedURL) : $this->RedirectLink) {
 
-			if(($page = $this->getRedirectPage()) && ($link = ($page->Link() === Director::baseURL()) ? Controller::join_links(Director::baseURL(), 'home/') : $page->Link())) {
+                // Determine whether a redirection hostname exists.
 
-				// Determine whether a redirection hostname exists.
+                return MisdirectionService::is_external_URL($link) ? parse_url($link, PHP_URL_HOST) : null;
+            }
+        }
 
-				return MisdirectionService::is_external_URL($link) ? parse_url($link, PHP_URL_HOST) : null;
-			}
-		}
-		else {
+        // No redirection hostname has been found.
 
-			// Apply the regular expression pattern replacement.
+        return null;
+    }
 
-			if($link = (($this->LinkType === 'Regular Expression') && $this->matchedURL) ? preg_replace("%{$this->MappedLink}%i", $this->RedirectLink, $this->matchedURL) : $this->RedirectLink) {
+    /**
+     *	Retrieve the redirection URL for display purposes.
+     *
+     *	@return string
+     */
 
-				// Determine whether a redirection hostname exists.
+    public function getLinkSummary()
+    {
 
-				return MisdirectionService::is_external_URL($link) ? parse_url($link, PHP_URL_HOST) : null;
-			}
-		}
+        return ($link = $this->getLink()) ? trim($link, ' ?/') : '-';
+    }
 
-		// No redirection hostname has been found.
+    /**
+     *	Retrieve the redirection type for display purposes.
+     *
+     *	@return string
+     */
 
-		return null;
-	}
+    public function getRedirectTypeSummary()
+    {
 
-	/**
-	 *	Retrieve the redirection URL for display purposes.
-	 *
-	 *	@return string
-	 */
+        return $this->RedirectType ? $this->RedirectType : '-';
+    }
 
-	public function getLinkSummary() {
+    /**
+     *	Retrieve the page title associated with this link mapping redirection.
+     *
+     *	@return string
+     */
 
-		return ($link = $this->getLink()) ? trim($link, ' ?/') : '-';
-	}
+    public function getRedirectPageTitle()
+    {
 
-	/**
-	 *	Retrieve the redirection type for display purposes.
-	 *
-	 *	@return string
-	 */
+        return (($this->RedirectType === 'Page') && ($page = $this->getRedirectPage())) ? $page->Title : '-';
+    }
 
-	public function getRedirectTypeSummary() {
+    /**
+     *	Determine if the link mapping is live on the current stage.
+     *
+     *	@return string
+     */
 
-		return $this->RedirectType ? $this->RedirectType : '-';
-	}
+    public function isLive()
+    {
 
-	/**
-	 *	Retrieve the page title associated with this link mapping redirection.
-	 *
-	 *	@return string
-	 */
-
-	public function getRedirectPageTitle() {
-
-		return (($this->RedirectType === 'Page') && ($page = $this->getRedirectPage())) ? $page->Title : '-';
-	}
-
-	/**
-	 *	Determine if the link mapping is live on the current stage.
-	 *
-	 *	@return string
-	 */
-
-	public function isLive() {
-
-		return ($this->RedirectType === 'Page') ? ($this->getRedirectPage() ? 'true' : 'false') : '-';
-	}
+        return ($this->RedirectType === 'Page') ? ($this->getRedirectPage() ? 'true' : 'false') : '-';
+    }
 
 }

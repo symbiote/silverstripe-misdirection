@@ -13,70 +13,70 @@ use SilverStripe\Security\Permission;
  */
 class MisdirectionAdmin extends ModelAdmin
 {
-	private static $managed_models = LinkMapping::class;
+    private static $managed_models = LinkMapping::class;
 
-	private static $menu_title = 'Misdirection';
+    private static $menu_title = 'Misdirection';
 
-	private static $menu_description = 'Create, manage and test customisable link redirection mappings.';
+    private static $menu_description = 'Create, manage and test customisable link redirection mappings.';
 
-	private static $menu_icon_class = 'font-icon-switch';
+    private static $menu_icon_class = 'font-icon-switch';
 
-	private static $url_segment = 'misdirection';
+    private static $url_segment = 'misdirection';
 
-	private static $allowed_actions = array(
-		'getMappingChain'
-	);
+    private static $allowed_actions = [
+        'getMappingChain'
+    ];
 
-	/**
-	 *	Update the custom summary fields to be sortable.
-	 */
-	public function getEditForm($ID = null, $fields = null) {
+    /**
+     *	Update the custom summary fields to be sortable.
+     */
+    public function getEditForm($ID = null, $fields = null)
+    {
 
-		$form = parent::getEditForm($ID, $fields);
-		$gridfield = $form->Fields()->fieldByName($this->sanitiseClassName($this->modelClass));
-		$gridfield->getConfig()->getComponentByType(GridFieldSortableHeader::class)->setFieldSorting(array(
-			'RedirectTypeSummary' => 'RedirectType'
-		));
+        $form = parent::getEditForm($ID, $fields);
+        $gridfield = $form->Fields()->fieldByName($this->sanitiseClassName($this->modelClass));
+        $gridfield->getConfig()->getComponentByType(GridFieldSortableHeader::class)->setFieldSorting([
+            'RedirectTypeSummary' => 'RedirectType'
+        ]);
 
-		// Allow extension customisation.
+        // Allow extension customisation.
 
-		$this->extend('updateMisdirectionAdminEditForm', $form);
-		return $form;
-	}
+        $this->extend('updateMisdirectionAdminEditForm', $form);
+        return $form;
+    }
 
-	/**
-	 *	Retrieve the JSON link mapping recursion stack for the testing interface.
-	 *
-	 *	@URLparameter map <{TEST_URL}> string
-	 *	@return JSON
-	 */
-	public function getMappingChain()
-	{
-		$user = Member::currentUserID();
+    /**
+     *	Retrieve the JSON link mapping recursion stack for the testing interface.
+     *
+     *	@URLparameter map <{TEST_URL}> string
+     *	@return JSON
+     */
+    public function getMappingChain()
+    {
+        $user = Member::currentUserID();
 
-		if (singleton(LinkMapping::class)->canCreate()) {
+        if (singleton(LinkMapping::class)->canCreate()) {
 
-			// Instantiate a request to handle the link mapping.
-			$request = new HTTPRequest('GET', $this->getRequest()->getVar('map'));
+            // Instantiate a request to handle the link mapping.
+            $request = new HTTPRequest('GET', $this->getRequest()->getVar('map'));
 
-			// Retrieve the link mapping recursion stack JSON.
-			$testing = true;
-			$mappings = singleton(MisdirectionService::class)->getMappingByRequest($request, $testing);
+            // Retrieve the link mapping recursion stack JSON.
+            $testing = true;
+            $mappings = singleton(MisdirectionService::class)->getMappingByRequest($request, $testing);
 
-			$this->getResponse()->addHeader('Content-Type', 'application/json');
+            $this->getResponse()->addHeader('Content-Type', 'application/json');
 
-			// JSON_PRETTY_PRINT.
-			return json_encode($mappings, 128);
-		}
-		else {
-			return $this->httpError(404);
-		}
-	}
+            // JSON_PRETTY_PRINT.
+            return json_encode($mappings, 128);
+        } else {
+            return $this->httpError(404);
+        }
+    }
 
-	/**
+    /**
      * Export all domain model fields, instead of display fields to allow for
-	 * importing the list again
-	 *
+     * importing the list again
+     *
      * @return array
      */
     public function getExportFields()
@@ -93,7 +93,7 @@ class MisdirectionAdmin extends ModelAdmin
         $fields['ForwardPOSTRequest'] = 'ForwardPOSTRequest';
         $fields['HostnameRestriction'] = 'HostnameRestriction';
 
-		$this->extend('updateExportFields', $fields);
+        $this->extend('updateExportFields', $fields);
 
         return $fields;
     }
