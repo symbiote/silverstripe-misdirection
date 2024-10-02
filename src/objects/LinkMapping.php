@@ -158,11 +158,11 @@ class LinkMapping extends DataObject {
 
 		// Instantiate the required fields.
 
-		$fields->insertBefore(HeaderField::create(
+		$fields->insertBefore('LinkType', HeaderField::create(
 			'MappedLinkHeader',
 			'Mapping',
 			3
-		), 'LinkType');
+		));
 
 		// Retrieve the mapped link configuration as a single grouping.
 
