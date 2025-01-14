@@ -45,6 +45,20 @@ class LinkMapping extends DataObject {
 		'HostnameRestriction' => 'Varchar(255)'
 	);
 
+    /**
+     * @inheritdoc
+     */
+    private static $indexes = [
+        'LinkType' => true,
+        'MappedLink' => true,
+        'IncludesHostname' => true,
+        'Priority' => true,
+        'RedirectType' => true,
+        'RedirectLink' => true,
+        'RedirectPageID' => true,
+        'HostnameRestriction' => true
+    ];
+
 	private static $defaults = array(
 		'ResponseCode' => 301
 	);
