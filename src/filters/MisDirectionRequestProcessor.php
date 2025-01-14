@@ -65,8 +65,8 @@ class MisDirectionRequestProcessor implements HTTPMiddleware
 
 			// Retrieve the specific director rules.
 
-			if(($position = strpos($segment, '$')) !== false) {
-				$segment = rtrim(substr($segment, 0, $position), '/');
+			if(($position = strpos($segment ?? '', '$')) !== false) {
+				$segment = rtrim(substr($segment ?? '', 0, $position), '/');
 			}
 
 			// Determine if the current request matches a specific director rule.
