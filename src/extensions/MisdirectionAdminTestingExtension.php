@@ -12,34 +12,36 @@ use SilverStripe\View\Requirements;
  *	@author Nathan Glasl <nathan@symbiote.com.au>
  */
 
-class MisdirectionAdminTestingExtension extends Extension {
+class MisdirectionAdminTestingExtension extends Extension
+{
 
-	/**
-	 *	Update the edit form to include the URL input and test button.
-	 */
+    /**
+     *	Update the edit form to include the URL input and test button.
+     */
 
-	public function updateEditForm($form) {
+    public function updateEditForm($form)
+    {
 
-		Requirements::css('nglasl/silverstripe-misdirection: client/css/misdirection.css');
+        Requirements::css('nglasl/silverstripe-misdirection: client/css/misdirection.css');
 
-		// Restrict this functionality to administrators.
+        // Restrict this functionality to administrators.
 
-		$user = Security::getCurrentUser();
-		if(Permission::checkMember($user, 'ADMIN')) {
-			$gridfield = $form->fields->items[0];
-			if(isset($gridfield)) {
+        $user = Security::getCurrentUser();
+        if (Permission::checkMember($user, 'ADMIN')) {
+            $gridfield = $form->fields->items[0];
+            if (isset($gridfield)) {
 
-				// Add the required HTML fragment.
+                // Add the required HTML fragment.
 
-				Requirements::javascript('nglasl/silverstripe-misdirection: client/javascript/misdirection-testing.js');
-				$configuration = $gridfield->config;
-				$configuration->addComponent(new MisdirectionTesting());
-			}
-		}
+                Requirements::javascript('nglasl/silverstripe-misdirection: client/javascript/misdirection-testing.js');
+                $configuration = $gridfield->config;
+                $configuration->addComponent(new MisdirectionTesting());
+            }
+        }
 
-		// Allow extension customisation.
+        // Allow extension customisation.
 
-		$this->owner->extend('updateMisdirectionAdminTestingExtensionEditForm', $form);
-	}
+        $this->owner->extend('updateMisdirectionAdminTestingExtensionEditForm', $form);
+    }
 
 }
